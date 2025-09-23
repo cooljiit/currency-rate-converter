@@ -15,45 +15,28 @@ import java.util.Optional;
 @RequestMapping("/accounts")
 public class AccountController {
 
-    private final FindAccountAndConvertCurrencyUseCase findAccountAndConvertCurrencyUseCase;
-    private final FindAccountUseCase findAccountUseCase;
+    private final AccountFacade accountFacade;
 
     public AccountController(FindAccountAndConvertCurrencyUseCase findAccountAndConvertCurrencyUseCase,
                              FindAccountUseCase findAccountUseCase) {
-        this.findAccountAndConvertCurrencyUseCase = findAccountAndConvertCurrencyUseCase;
-        this.findAccountUseCase = findAccountUseCase;
+        this.accountFacade = new AccountFacade(findAccountAndConvertCurrencyUseCase, findAccountUseCase);
     }
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<Account> findAccountById(@PathVariable String id, @RequestParam(required = false) String currency) {
-        return Optional.ofNullable(currency)
-                .map(s ->
-                        findAccountAndConvertCurrencyUseCase.execute(Account.Id.of(id), Currency.getInstance(s))
-                                .map(ResponseEntity::ok)
-                                .orElse(ResponseEntity.notFound().build())
-                )
-                .orElseGet(() ->
-                        findAccountUseCase.execute(Account.Id.of(id))
-                                .map(ResponseEntity::ok)
-                                .orElse(ResponseEntity.notFound().build())
-                );
+        return accountFacade.findById(Account.Id.of(id), currency).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping(path = "/number={number}")
     public ResponseEntity<Account> findAccountByNumber(@PathVariable String number, @RequestParam(required = false) String currency) {
         Account.Number accountNumber = Account.Number.of(URLDecoder.decode(number, StandardCharsets.UTF_8));
-        return Optional.ofNullable(currency)
-                .map(s ->
-                        findAccountAndConvertCurrencyUseCase.execute(accountNumber, Currency.getInstance(s))
-                                .map(ResponseEntity::ok)
-                                .orElse(ResponseEntity.notFound().build())
-                )
-                .orElseGet(() ->
-                        findAccountUseCase.execute(accountNumber)
-                                .map(ResponseEntity::ok)
-                                .orElse(ResponseEntity.notFound().build())
-                );
+        return accountFacade.findByNumber(accountNumber, currency).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 
 }
+
+
+
