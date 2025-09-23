@@ -1,5 +1,7 @@
 package pl.cleankod.exchange.core.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import pl.cleankod.util.Preconditions;
 
 import java.util.UUID;
@@ -7,7 +9,7 @@ import java.util.regex.Pattern;
 
 public record Account(Id id, Number number, Money balance) {
 
-    public static record Id(UUID value) {
+    public static record Id(@JsonValue UUID value) {
         public Id {
             Preconditions.requireNonNull(value);
         }
@@ -16,13 +18,14 @@ public record Account(Id id, Number number, Money balance) {
             return new Id(value);
         }
 
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         public static Id of(String value) {
             Preconditions.requireNonNull(value);
             return new Id(UUID.fromString(value));
         }
     }
 
-    public static record Number(String value) {
+    public static record Number(@JsonValue String value) {
         private static final Pattern PATTERN =
                 Pattern.compile("\\d{2}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}");
 
@@ -33,6 +36,7 @@ public record Account(Id id, Number number, Money balance) {
             }
         }
 
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         public static Number of(String value) {
             return new Number(value);
         }
