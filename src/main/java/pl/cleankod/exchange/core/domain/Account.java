@@ -1,15 +1,17 @@
 package pl.cleankod.exchange.core.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonValue;
 import pl.cleankod.util.Preconditions;
 
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+@JsonIgnoreProperties(ignoreUnknown = true) // fix for timestamp issue
 public record Account(Id id, Number number, Money balance) {
 
-    public static record Id(@JsonValue UUID value) {
+    public static record Id(UUID value) {
         public Id {
             Preconditions.requireNonNull(value);
         }
@@ -23,9 +25,14 @@ public record Account(Id id, Number number, Money balance) {
             Preconditions.requireNonNull(value);
             return new Id(UUID.fromString(value));
         }
+
+        @JsonValue // only annotate getter, not field
+        public UUID getValue() {
+            return value;
+        }
     }
 
-    public static record Number(@JsonValue String value) {
+    public static record Number(String value) {
         private static final Pattern PATTERN =
                 Pattern.compile("\\d{2}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}[ ]?\\d{4}");
 
@@ -39,6 +46,11 @@ public record Account(Id id, Number number, Money balance) {
         @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         public static Number of(String value) {
             return new Number(value);
+        }
+
+        @JsonValue
+        public String getValue() {
+            return value;
         }
     }
 }
