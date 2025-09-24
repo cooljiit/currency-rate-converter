@@ -19,17 +19,27 @@ import java.util.Currency;
 public class CurrencyConversionNbpService implements CurrencyConversionService {
     private final ExchangeRatesNbpClient exchangeRatesNbpClient;
     private final Map<String, CacheEntry> rateCache = new ConcurrentHashMap<>();
-    private final long ttlMillis = 5 * 60 * 1000L; // 5 minutes
+    private final long ttlMillis; // ms
     private static final Logger log = LoggerFactory.getLogger(CurrencyConversionNbpService.class);
 
     // Simple circuit breaker
     private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
     private final AtomicLong openUntilMillis = new AtomicLong(0);
-    private final int failureThreshold = 3;
-    private final long openStateMillis = 30_000L; // 30s
+    private final int failureThreshold;
+    private final long openStateMillis; // ms
 
     public CurrencyConversionNbpService(ExchangeRatesNbpClient exchangeRatesNbpClient) {
+        this(exchangeRatesNbpClient, 5 * 60 * 1000L, 3, 30_000L);
+    }
+
+    public CurrencyConversionNbpService(ExchangeRatesNbpClient exchangeRatesNbpClient,
+                                        long ttlMillis,
+                                        int failureThreshold,
+                                        long openStateMillis) {
         this.exchangeRatesNbpClient = exchangeRatesNbpClient;
+        this.ttlMillis = ttlMillis;
+        this.failureThreshold = failureThreshold;
+        this.openStateMillis = openStateMillis;
     }
 
     @Override
@@ -44,7 +54,7 @@ public class CurrencyConversionNbpService implements CurrencyConversionService {
         long now = System.currentTimeMillis();
         long openUntil = openUntilMillis.get();
         if (openUntil > now) {
-            throw new IllegalStateException("NBP client circuit open until " + openUntil);
+            throw new pl.cleankod.exchange.core.usecase.CircuitOpenException("NBP client circuit open until " + openUntil);
         }
         CacheEntry cached = rateCache.get(code);
         if (cached != null && cached.expiresAtMillis > now) {
