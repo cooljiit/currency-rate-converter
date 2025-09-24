@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-
-    // Apply the groovy plugin to also add support for Groovy (needed for Spock)
+    id 'org.springframework.boot' version '2.6.3'
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
     id 'groovy'
     id 'jacoco'
 }
