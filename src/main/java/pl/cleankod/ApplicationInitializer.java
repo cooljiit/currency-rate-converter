@@ -45,8 +45,11 @@ public class ApplicationInitializer {
     }
 
     @Bean
-    CurrencyConversionService currencyConversionService(ExchangeRatesNbpClient exchangeRatesNbpClient) {
-        return new CurrencyConversionNbpService(exchangeRatesNbpClient);
+    CurrencyConversionService currencyConversionService(ExchangeRatesNbpClient exchangeRatesNbpClient, Environment environment) {
+        long ttlMillis = environment.getProperty("nbp.cache.ttl-ms", Long.class, 5 * 60 * 1000L);
+        int failureThreshold = environment.getProperty("nbp.cb.failure-threshold", Integer.class, 3);
+        long openMillis = environment.getProperty("nbp.cb.open-ms", Long.class, 30_000L);
+        return new CurrencyConversionNbpService(exchangeRatesNbpClient, ttlMillis, failureThreshold, openMillis);
     }
 
     @Bean
